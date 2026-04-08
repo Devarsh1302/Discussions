@@ -2,40 +2,24 @@
 
 `Where ideas become insight`
 
-Discussions is a topic-based anonymous discussion platform where live conversations run in timed phases, lock when the timer ends, and become reusable insight summaries that can be revived later.
+Discussions is a topic-based anonymous discussion platform where timed conversations turn into reusable insight summaries and can be revived in later phases.
 
 ## Stack
 
 - Frontend: React + Vite + Tailwind CSS
 - Backend: Node.js + Express
-- Database: PostgreSQL on Supabase
-- Hosting: Vercel for the frontend, Render for the backend
-- AI: placeholder summary service with a clean upgrade path for an LLM later
+- Database: PostgreSQL (Supabase)
+- Free hosting (recommended): Render web service for full app + Supabase for DB
 
-## What The App Does
+## Local Setup
 
-- Create topic-based discussions with tags and an intent
-- Let people join anonymously with generated identities
-- Run each conversation inside a timed phase
-- Lock the phase when time expires
-- Preserve the discussion as an insight summary
-- Reopen the same discussion as Phase 2, Phase 3, and beyond
-
-## Prerequisites
-
-- Node.js 22+
-- npm
-- Optional for persistence: a Supabase Postgres database
-
-## Local Development
-
-### 1. Install dependencies
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-### 2. Create your environment file
+2. Create environment file:
 
 PowerShell:
 
@@ -49,167 +33,110 @@ macOS / Linux:
 cp .env.example .env
 ```
 
-### 3. Choose how you want to run locally
+3. For persistent local data, set `DATABASE_URL` in `.env` to your Supabase Postgres URL.
 
-Option A: full local setup with Postgres persistence
-
-1. Put your Supabase Postgres connection string in `DATABASE_URL`.
-2. `SUPABASE_DB_URL` is also supported as a fallback, but `DATABASE_URL` is preferred.
-3. Apply the schema:
+4. Apply schema:
 
 ```bash
 npm run db:setup
 ```
 
-Option B: quick UI preview with no database
-
-- Leave `DATABASE_URL` empty.
-- The app will run in memory mode.
-- Data will reset whenever the server restarts.
-
-### 4. Start the app
+5. Start app:
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+6. Open `http://localhost:3000`.
 
 ## Scripts
 
-- `npm run dev` starts the Express server in development mode and serves the Vite frontend through middleware
-- `npm run build` builds the client to `dist/client` and the backend to `dist/server`
-- `npm run start` runs the production build
-- `npm run check` runs TypeScript checks
-- `npm run db:setup` applies `server/db/schema.sql` to your configured Postgres database
+- `npm run dev`
+- `npm run build`
+- `npm run start`
+- `npm run check`
+- `npm run db:setup`
 
-## Free Hosting Plan
+## Deploy Free (No Vercel Needed)
 
-This project is set up to deploy for free with:
+This app already serves the built frontend from Express in production, so one Render service is enough.
 
-- [Supabase Free](https://supabase.com/pricing) for PostgreSQL
-- [Render Free Web Service](https://render.com/free) for the Express backend
-- [Vercel Hobby](https://vercel.com/docs/accounts/plans) for the React frontend
+### 1. Push repo to GitHub
 
-## Recommended Deployment Order
+Render will deploy from your repo branch.
 
-1. Push this project to GitHub.
-2. Create the Supabase database.
-3. Deploy the backend on Render.
-4. Deploy the frontend on Vercel.
-5. Update the backend CORS settings with the final Vercel URL.
-6. Run a quick smoke test.
+### 2. Create Supabase Postgres project
 
-## Step-By-Step Free Deployment
-
-### 1. Push the repo to GitHub
-
-Vercel and Render are easiest to configure from a GitHub repository.
-
-### 2. Create a free Supabase project
-
-1. Create a project in Supabase.
-2. Open `Project Settings -> Database`.
-3. Copy the Postgres connection string.
-4. Make sure it includes SSL, for example:
+1. Create a project on Supabase.
+2. Copy the Postgres URL from `Project Settings -> Database`.
+3. Include SSL in the URL, for example:
 
 ```text
 postgresql://postgres:password@host:5432/postgres?sslmode=require
 ```
 
-5. Apply the schema using one of these options:
+4. Apply schema with either:
 
 ```bash
 npm run db:setup
 ```
 
-or paste [`server/db/schema.sql`](server/db/schema.sql) into the Supabase SQL editor.
+or run [`server/db/schema.sql`](server/db/schema.sql) in Supabase SQL Editor.
 
-### 3. Deploy the backend on Render
+### 3. Deploy on Render (single service)
 
-This repo already includes [`render.yaml`](render.yaml), so you can use either:
-
-- Blueprint deploy
-- Manual web service setup
-
-Blueprint deploy:
+This repo includes [`render.yaml`](render.yaml). Use Blueprint deploy:
 
 1. In Render, click `New -> Blueprint`.
-2. Connect your GitHub repo.
-3. Confirm the service settings from `render.yaml`.
+2. Connect this GitHub repo.
+3. Render auto-loads service config.
 
-Manual setup:
+If you prefer manual setup:
 
-- Service type: `Web Service`
+- Type: `Web Service`
 - Runtime: `Node`
-- Build Command: `npm ci && npm run build`
+- Build Command: `npm ci --include=dev && npm run build`
 - Start Command: `npm run start`
 - Instance Type: `Free`
 
-Set these environment variables on Render:
+Set environment variables in Render:
 
 - `NODE_ENV=production`
 - `DATABASE_URL=<your-supabase-postgres-url>`
-- `FRONTEND_URL=<your-vercel-url>`
-- `CORS_ORIGINS=<your-vercel-url>`
 
-Notes:
+Optional hardening after first deploy:
 
-- You can leave `FRONTEND_URL` and `CORS_ORIGINS` blank for the first deploy, then update them after Vercel gives you the final frontend URL.
-- The backend health check will be available at `https://your-service.onrender.com/api/health`.
+- `CORS_ORIGINS=https://your-render-service.onrender.com`
+- `FRONTEND_URL=https://your-render-service.onrender.com`
 
-### 4. Deploy the frontend on Vercel
+### 4. Verify deploy
 
-This repo already includes [`vercel.json`](vercel.json).
+After deploy completes:
 
-1. Import the GitHub repo into Vercel.
-2. If Vercel asks for project settings, use:
-
-- Framework Preset: `Vite`
-- Build Command: `npm run build`
-- Output Directory: `dist/client`
-
-3. Add this environment variable:
-
-- `VITE_API_BASE_URL=https://your-service.onrender.com`
-
-4. Deploy the project.
-
-Your frontend will be hosted at a URL like:
+1. Open your Render URL, for example `https://discussions.onrender.com`.
+2. Check health endpoint:
 
 ```text
-https://your-project.vercel.app
+https://discussions.onrender.com/api/health
 ```
 
-### 5. Reconnect the backend to the final frontend URL
+3. Test key flows:
 
-After Vercel finishes deploying:
-
-1. Open your Render service settings.
-2. Set:
-
-- `FRONTEND_URL=https://your-project.vercel.app`
-- `CORS_ORIGINS=https://your-project.vercel.app`
-
-3. Redeploy the backend.
-
-### 6. Smoke test the live app
-
-Check all of these before you share the link:
-
-- the Vercel frontend loads
-- `https://your-service.onrender.com/api/health` returns `ok: true`
-- anonymous user bootstrap works
-- creating a discussion works
-- opening a discussion works
-- completed discussions appear in the Insights Library
-- reviving a discussion creates a new phase
+- create topic
+- join discussion
+- post message
+- finish/lock phase
+- open insights page
+- revive discussion
 
 ## Free Tier Notes
 
-- Render says free web services spin down after 15 minutes of inactivity, so the first request after idle can take a little longer. See [Render Free](https://render.com/free).
-- Vercel documents the Hobby plan as a free plan for personal projects and developers. See [Vercel account plans](https://vercel.com/docs/accounts/plans).
-- Supabase documents a free plan suitable for small demos and MVPs, with current limits and project counts listed on their pricing pages. See [Supabase Pricing](https://supabase.com/pricing) and [Supabase billing docs](https://supabase.com/docs/guides/platform/billing-on-supabase).
+- Render free web services spin down after inactivity, so first request can be slower: [Render Free](https://render.com/free)
+- Supabase Free is suitable for MVP/demo traffic and has plan limits: [Supabase Pricing](https://supabase.com/pricing)
+
+## Optional: Split Frontend + Backend Later
+
+If you want separate hosting later, you can move frontend to Vercel and keep backend on Render, but it is not required for this project.
 
 ## Important Files
 
@@ -218,10 +145,9 @@ Check all of these before you share the link:
 - Discussion page: [`client/pages/DiscussionPage.tsx`](client/pages/DiscussionPage.tsx)
 - Insights page: [`client/pages/InsightsPage.tsx`](client/pages/InsightsPage.tsx)
 - Backend entry: [`server/index.ts`](server/index.ts)
-- Database schema: [`server/db/schema.sql`](server/db/schema.sql)
-- Deployment config: [`render.yaml`](render.yaml)
-- Frontend rewrite config: [`vercel.json`](vercel.json)
+- Schema: [`server/db/schema.sql`](server/db/schema.sql)
+- Render config: [`render.yaml`](render.yaml)
 
-## More Product Detail
+## Detailed Product Notes
 
-For the full architecture, schema design, API contract, lifecycle notes, and implementation handoff, see [`SUBMISSION.md`](SUBMISSION.md).
+For architecture, schema, API, lifecycle, and implementation handoff details, see [`SUBMISSION.md`](SUBMISSION.md).
